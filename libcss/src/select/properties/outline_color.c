@@ -14,7 +14,7 @@
 #include "select/properties/properties.h"
 #include "select/properties/helpers.h"
 
-css_error css__cascade_outline_color(uint32_t opv, css_style *style, 
+css_error css__cascade_outline_color(uint32_t opv, css_style *style,
 		css_select_state *state)
 {
 	uint16_t value = CSS_OUTLINE_COLOR_INHERIT;
@@ -65,17 +65,9 @@ css_error css__compose_outline_color(const css_computed_style *parent,
 	css_color color = 0;
 	uint8_t type = get_outline_color(child, &color);
 
-	if ((child->uncommon == NULL && parent->uncommon != NULL) ||
-			type == CSS_OUTLINE_COLOR_INHERIT ||
-			(child->uncommon != NULL && result != child)) {
-		if ((child->uncommon == NULL && parent->uncommon != NULL) ||
-				type == CSS_OUTLINE_COLOR_INHERIT) {
-			type = get_outline_color(parent, &color);
-		}
-
-		return set_outline_color(result, type, color);
+	if (type == CSS_OUTLINE_COLOR_INHERIT) {
+		type = get_outline_color(parent, &color);
 	}
 
-	return CSS_OK;
+	return set_outline_color(result, type, color);
 }
-

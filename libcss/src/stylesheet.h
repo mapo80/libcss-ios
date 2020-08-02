@@ -20,6 +20,7 @@
 
 #include "bytecode/bytecode.h"
 #include "parse/parse.h"
+#include "parse/mq.h"
 #include "select/hash.h"
 
 typedef struct css_rule css_rule;
@@ -74,7 +75,7 @@ typedef struct css_selector_detail {
 
 	unsigned int type       : 4,		/**< Type of selector */
 		     comb       : 3,		/**< Type of combinator */
-		     next       : 1,		/**< Another selector detail 
+		     next       : 1,		/**< Another selector detail
 						 * follows */
 		     value_type : 1,		/**< Type of value field */
 		     negate     : 1;		/**< Detail match is inverted */
@@ -110,16 +111,16 @@ typedef enum css_rule_parent_type {
 } css_rule_parent_type;
 
 struct css_rule {
-	void *parent;				/**< containing rule or owning 
+	void *parent;				/**< containing rule or owning
 						 * stylesheet (defined by ptype)
 						 */
 	css_rule *next;				/**< next in list */
 	css_rule *prev;				/**< previous in list */
 
-	unsigned int type  :  4,		/**< css_rule_type */
-		     index : 16,		/**< index in sheet */
-		     items :  8,		/**< # items in rule */
-		     ptype :  1;		/**< css_rule_parent_type */
+	uint32_t index; /**< index in sheet */
+	uint16_t items; /**< number of items (selectors) in rule */
+	uint8_t type;   /**< css_rule_type */
+	uint8_t ptype;  /**< css_rule_parent_type */
 } _ALIGNED;
 
 typedef struct css_rule_selector {
@@ -132,7 +133,7 @@ typedef struct css_rule_selector {
 typedef struct css_rule_media {
 	css_rule base;
 
-	uint64_t media;
+	css_mq_query *media;
 
 	css_rule *first_child;
 	css_rule *last_child;
@@ -155,7 +156,7 @@ typedef struct css_rule_import {
 	css_rule base;
 
 	lwc_string *url;
-	uint64_t media;
+	css_mq_query *media;
 
 	css_stylesheet *sheet;
 } css_rule_import;
@@ -173,7 +174,7 @@ struct css_stylesheet {
 	css_rule *rule_list;			/**< List of rules in sheet */
 	css_rule *last_rule;			/**< Last rule in list */
 
-	bool disabled;				/**< Whether this sheet is 
+	bool disabled;				/**< Whether this sheet is
 						 * disabled */
 
 	char *url;				/**< URL of this sheet */
@@ -201,19 +202,19 @@ struct css_stylesheet {
 	void *color_pw;				/**< Private word */
 
 	/** System font resolution function */
-	css_font_resolution_fn font;		
+	css_font_resolution_fn font;
 	void *font_pw;				/**< Private word */
-  
+
 	css_style *cached_style;		/**< Cache for style parsing */
-  
+
 	lwc_string **string_vector;             /**< Bytecode string vector */
 	uint32_t string_vector_l;               /**< The string vector allocated
 						 * length in entries */
-	uint32_t string_vector_c;               /**< The number of string 
-						 * vector entries used */ 
+	uint32_t string_vector_c;               /**< The number of string
+						 * vector entries used */
 };
 
-css_error css__stylesheet_style_create(css_stylesheet *sheet, 
+css_error css__stylesheet_style_create(css_stylesheet *sheet,
 		css_style **style);
 css_error css__stylesheet_style_append(css_style *style, css_code_t code);
 css_error css__stylesheet_style_vappend(css_style *style, uint32_t style_count,
@@ -221,19 +222,19 @@ css_error css__stylesheet_style_vappend(css_style *style, uint32_t style_count,
 css_error css__stylesheet_style_destroy(css_style *style);
 css_error css__stylesheet_merge_style(css_style *target, css_style *style);
 
-/** Helper function to avoid distinct buildOPV call */ 
-static inline css_error css__stylesheet_style_appendOPV(css_style *style, 
+/** Helper function to avoid distinct buildOPV call */
+static inline css_error css__stylesheet_style_appendOPV(css_style *style,
 		opcode_t opcode, uint8_t flags, uint16_t value)
 {
-	return css__stylesheet_style_append(style, 
+	return css__stylesheet_style_append(style,
 			buildOPV(opcode, flags, value));
 }
 
-/** Helper function to set inherit flag */ 
-static inline css_error css_stylesheet_style_inherit(css_style *style, 
+/** Helper function to set inherit flag */
+static inline css_error css_stylesheet_style_inherit(css_style *style,
 		opcode_t opcode)
 {
-	return css__stylesheet_style_append(style, 
+	return css__stylesheet_style_append(style,
 			buildOPV(opcode, FLAG_INHERIT, 0));
 }
 
@@ -244,7 +245,7 @@ css_error css__stylesheet_selector_destroy(css_stylesheet *sheet,
 
 css_error css__stylesheet_selector_detail_init(css_stylesheet *sheet,
 		css_selector_type type, css_qname *qname,
-		css_selector_detail_value value, 
+		css_selector_detail_value value,
 		css_selector_detail_value_type value_type,
 		bool negate, css_selector_detail *detail);
 
@@ -258,7 +259,7 @@ css_error css__stylesheet_rule_create(css_stylesheet *sheet, css_rule_type type,
 		css_rule **rule);
 css_error css__stylesheet_rule_destroy(css_stylesheet *sheet, css_rule *rule);
 
-css_error css__stylesheet_rule_add_selector(css_stylesheet *sheet, 
+css_error css__stylesheet_rule_add_selector(css_stylesheet *sheet,
 		css_rule *rule, css_selector *selector);
 
 css_error css__stylesheet_rule_append_style(css_stylesheet *sheet,
@@ -268,10 +269,10 @@ css_error css__stylesheet_rule_set_charset(css_stylesheet *sheet,
 		css_rule *rule, lwc_string *charset);
 
 css_error css__stylesheet_rule_set_nascent_import(css_stylesheet *sheet,
-		css_rule *rule, lwc_string *url, uint64_t media);
+		css_rule *rule, lwc_string *url, css_mq_query *media);
 
 css_error css__stylesheet_rule_set_media(css_stylesheet *sheet,
-		css_rule *rule, uint64_t media);
+		css_rule *rule, css_mq_query *media);
 
 css_error css__stylesheet_rule_set_page_selector(css_stylesheet *sheet,
 		css_rule *rule, css_selector *sel);
@@ -280,10 +281,10 @@ css_error css__stylesheet_add_rule(css_stylesheet *sheet, css_rule *rule,
 		css_rule *parent);
 css_error css__stylesheet_remove_rule(css_stylesheet *sheet, css_rule *rule);
 
-css_error css__stylesheet_string_get(css_stylesheet *sheet, 
+css_error css__stylesheet_string_get(css_stylesheet *sheet,
 		uint32_t string_number, lwc_string **string);
 
-css_error css__stylesheet_string_add(css_stylesheet *sheet, 
+css_error css__stylesheet_string_add(css_stylesheet *sheet,
 		lwc_string *string, uint32_t *string_number);
 
 #endif

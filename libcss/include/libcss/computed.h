@@ -76,19 +76,16 @@ typedef struct css_computed_content_item {
 	} data;
 } css_computed_content_item;
 
-css_error css_computed_style_create(css_computed_style **result);
 css_error css_computed_style_destroy(css_computed_style *style);
 
-css_error css_computed_style_initialise(css_computed_style *style,
-		struct css_select_handler *handler, void *pw);
-
-css_error css_computed_style_compose(const css_computed_style *parent,
-		const css_computed_style *child,
+css_error css_computed_style_compose(
+		const css_computed_style *restrict parent,
+		const css_computed_style *restrict child,
 		css_error (*compute_font_size)(void *pw,
 				const struct css_hint *parent,
 				struct css_hint *size),
 		void *pw,
-		css_computed_style *result);
+		css_computed_style **restrict result);
 
 /******************************************************************************
  * Property accessors below here                                              *
@@ -205,6 +202,9 @@ uint8_t css_computed_border_bottom_color(
 uint8_t css_computed_border_left_color(
 		const css_computed_style *style,
 		css_color *color);
+
+uint8_t css_computed_box_sizing(
+		const css_computed_style *style);
 
 uint8_t css_computed_height(
 		const css_computed_style *style,
@@ -438,37 +438,41 @@ uint8_t css_computed_orphans(
 uint8_t css_computed_widows(
 		const css_computed_style *style,
 		int32_t *widows);
-    
-/* facebook css layout support  */
-uint8_t css_computed_flex_direction(
-        const css_computed_style* style);
-    
-uint8_t css_computed_justify_content(
-        const css_computed_style* style);
-    
+
 uint8_t css_computed_align_content(
-        const css_computed_style* style);
-    
+		const css_computed_style *style);
+
 uint8_t css_computed_align_items(
-        const css_computed_style* style);
-    
+		const css_computed_style *style);
+
 uint8_t css_computed_align_self(
-        const css_computed_style* style);
-    
-uint8_t css_computed_flex_wrap(
-        const css_computed_style* style);
-    
-uint8_t css_computed_flex_grow(
-        const css_computed_style* style,
-        int32_t* flexgrow);
-    
-uint8_t css_computed_flex_shrink(
-        const css_computed_style* style,
-        int32_t* flexshrink);
-    
+		const css_computed_style *style);
+
 uint8_t css_computed_flex_basis(
-        const css_computed_style* style,
-        int32_t* basis);
+		const css_computed_style *style,
+		css_fixed *length,
+		css_unit *unit);
+
+uint8_t css_computed_flex_direction(
+		const css_computed_style *style);
+
+uint8_t css_computed_flex_grow(
+		const css_computed_style *style,
+		css_fixed *number);
+
+uint8_t css_computed_flex_shrink(
+		const css_computed_style *style,
+		css_fixed *number);
+
+uint8_t css_computed_flex_wrap(
+		const css_computed_style *style);
+
+uint8_t css_computed_justify_content(
+		const css_computed_style *style);
+
+uint8_t css_computed_order(
+		const css_computed_style *style,
+		int32_t *order);
 
 #ifdef __cplusplus
 }

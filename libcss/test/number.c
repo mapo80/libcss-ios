@@ -21,7 +21,7 @@ typedef struct line_ctx {
 } line_ctx;
 
 static bool handle_line(const char *data, size_t datalen, void *pw);
-static void run_test(const uint8_t *data, size_t len, 
+static void run_test(const uint8_t *data, size_t len,
 		const char *exp, size_t explen);
 static void print_css_fixed(char *buf, size_t len, css_fixed f);
 
@@ -72,7 +72,7 @@ bool handle_line(const char *data, size_t datalen, void *pw)
 		if (ctx->inexp) {
 			/* This marks end of testcase, so run it */
 
-			run_test(ctx->buf, ctx->bufused - 1, 
+			run_test(ctx->buf, ctx->bufused - 1,
 					ctx->exp, ctx->explen);
 
 			ctx->buf[0] = '\0';
@@ -117,9 +117,9 @@ void run_test(const uint8_t *data, size_t len, const char *exp, size_t explen)
 
 	UNUSED(exp);
 	UNUSED(explen);
-        
+
         assert(lwc_intern_string((const char *)data, len, &in) == lwc_error_ok);
-        
+
 	result = css__number_from_lwc_string(in, false, &consumed);
 
 	print_css_fixed(buf, sizeof(buf), result);
@@ -133,7 +133,7 @@ void run_test(const uint8_t *data, size_t len, const char *exp, size_t explen)
 
 void print_css_fixed(char *buf, size_t len, css_fixed f)
 {
-#define ABS(x) (uint32_t)((x) < 0 ? -(x) : (x))
+#define ABS(x) (uint32_t)((x) < 0 ? -((int64_t)x) : (x))
 	uint32_t uintpart = FIXTOINT(ABS(f));
 	/* + 500 to ensure round to nearest (division will truncate) */
 	uint32_t fracpart = ((ABS(f) & 0x3ff) * 1000 + 500) / (1 << 10);

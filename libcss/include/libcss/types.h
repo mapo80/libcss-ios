@@ -60,10 +60,10 @@ typedef enum css_media_type {
 	CSS_MEDIA_TTY               = (1 << 8),
 	CSS_MEDIA_TV                = (1 << 9),
 	CSS_MEDIA_ALL               = CSS_MEDIA_AURAL | CSS_MEDIA_BRAILLE |
-                                      CSS_MEDIA_EMBOSSED | CSS_MEDIA_HANDHELD |
-                                      CSS_MEDIA_PRINT | CSS_MEDIA_PROJECTION |
-                                      CSS_MEDIA_SCREEN | CSS_MEDIA_SPEECH |
-                                      CSS_MEDIA_TTY | CSS_MEDIA_TV
+	                              CSS_MEDIA_EMBOSSED | CSS_MEDIA_HANDHELD |
+	                              CSS_MEDIA_PRINT | CSS_MEDIA_PROJECTION |
+	                              CSS_MEDIA_SCREEN | CSS_MEDIA_SPEECH |
+	                              CSS_MEDIA_TTY | CSS_MEDIA_TV
 } css_media_type;
 
 /**
@@ -80,27 +80,168 @@ typedef uint32_t css_color;
 
 /* CSS unit */
 typedef enum css_unit {
-	CSS_UNIT_PX                 = 0x0,
-	CSS_UNIT_EX                 = 0x1,
-	CSS_UNIT_EM                 = 0x2,
-	CSS_UNIT_IN                 = 0x3,
-	CSS_UNIT_CM                 = 0x4,
-	CSS_UNIT_MM                 = 0x5,
-	CSS_UNIT_PT                 = 0x6,
-	CSS_UNIT_PC                 = 0x7,
+	CSS_UNIT_PX                 = 0x00,
+	CSS_UNIT_EX                 = 0x01,
+	CSS_UNIT_EM                 = 0x02,
+	CSS_UNIT_IN                 = 0x03,
+	CSS_UNIT_CM                 = 0x04,
+	CSS_UNIT_MM                 = 0x05,
+	CSS_UNIT_PT                 = 0x06,
+	CSS_UNIT_PC                 = 0x07,
+	CSS_UNIT_CAP                = 0x08,
+	CSS_UNIT_CH                 = 0x09,
+	CSS_UNIT_IC                 = 0x0a,
+	CSS_UNIT_REM                = 0x0b,
+	CSS_UNIT_LH                 = 0x0c,
+	CSS_UNIT_RLH                = 0x0d,
+	CSS_UNIT_VH                 = 0x0e,
+	CSS_UNIT_VW                 = 0x0f,
+	CSS_UNIT_VI                 = 0x10,
+	CSS_UNIT_VB                 = 0x11,
+	CSS_UNIT_VMIN               = 0x12,
+	CSS_UNIT_VMAX               = 0x13,
+	CSS_UNIT_Q                  = 0x14,
 
-	CSS_UNIT_PCT                = 0x8,	/* Percentage */
+	CSS_UNIT_PCT                = 0x15,	/* Percentage */
 
-	CSS_UNIT_DEG                = 0x9,
-	CSS_UNIT_GRAD               = 0xa,
-	CSS_UNIT_RAD                = 0xb,
+	CSS_UNIT_DEG                = 0x16,
+	CSS_UNIT_GRAD               = 0x17,
+	CSS_UNIT_RAD                = 0x18,
 
-	CSS_UNIT_MS                 = 0xc,
-	CSS_UNIT_S                  = 0xd,
+	CSS_UNIT_MS                 = 0x19,
+	CSS_UNIT_S                  = 0x1a,
 
-	CSS_UNIT_HZ                 = 0xe,
-	CSS_UNIT_KHZ                = 0xf
+	CSS_UNIT_HZ                 = 0x1b,
+	CSS_UNIT_KHZ                = 0x1c
 } css_unit;
+
+/**
+ * Media orienations
+ */
+typedef enum css_media_orientation {
+	CSS_MEDIA_ORIENTATION_PORTRAIT  = 0,
+	CSS_MEDIA_ORIENTATION_LANDSCAPE = 1
+} css_media_orientation;
+
+/**
+ * Media scans
+ */
+typedef enum css_media_scan {
+	CSS_MEDIA_SCAN_PROGRESSIVE = 0,
+	CSS_MEDIA_SCAN_INTERLACE   = 1
+} css_media_scan;
+
+/**
+ * Media update-frequencies
+ */
+typedef enum css_media_update_frequency {
+	CSS_MEDIA_UPDATE_FREQUENCY_NORMAL = 0,
+	CSS_MEDIA_UPDATE_FREQUENCY_SLOW   = 1,
+	CSS_MEDIA_UPDATE_FREQUENCY_NONE   = 2
+} css_media_update_frequency;
+
+/**
+ * Media block overflows
+ */
+typedef enum css_media_overflow_block {
+	CSS_MEDIA_OVERFLOW_BLOCK_NONE           = 0,
+	CSS_MEDIA_OVERFLOW_BLOCK_SCROLL         = 1,
+	CSS_MEDIA_OVERFLOW_BLOCK_OPTIONAL_PAGED = 2,
+	CSS_MEDIA_OVERFLOW_BLOCK_PAGED          = 3
+} css_media_overflow_block;
+
+/**
+ * Media inline overflows
+ */
+typedef enum css_media_overflow_inline {
+	CSS_MEDIA_OVERFLOW_INLINE_NONE   = 0,
+	CSS_MEDIA_OVERFLOW_INLINE_SCROLL = 1
+} css_media_overflow_inline;
+
+/**
+ * Media pointers
+ */
+typedef enum css_media_pointer {
+	CSS_MEDIA_POINTER_NONE   = 0,
+	CSS_MEDIA_POINTER_COARSE = 1,
+	CSS_MEDIA_POINTER_FINE   = 2
+} css_media_pointer;
+
+/**
+ * Media hovers
+ */
+typedef enum css_media_hover {
+	CSS_MEDIA_HOVER_NONE      = 0,
+	CSS_MEDIA_HOVER_ON_DEMAND = 1,
+	CSS_MEDIA_HOVER_HOVER     = 2
+} css_media_hover;
+
+/**
+ * Media light-levels
+ */
+typedef enum css_media_light_level {
+	CSS_MEDIA_LIGHT_LEVEL_NORMAL = 0,
+	CSS_MEDIA_LIGHT_LEVEL_DIM    = 1,
+	CSS_MEDIA_LIGHT_LEVEL_WASHED = 2
+} css_media_light_level;
+
+/**
+ * Media scriptings
+ */
+typedef enum css_media_scripting {
+	CSS_MEDIA_SCRIPTING_NONE         = 0,
+	CSS_MEDIA_SCRIPTING_INITIAL_ONLY = 1,
+	CSS_MEDIA_SCRIPTING_ENABLED      = 2
+} css_media_scripting;
+
+typedef struct css_media_resolution {
+	css_fixed value;
+	css_unit unit;
+} css_media_resolution;
+
+/**
+ * Media specification
+ */
+typedef struct css_media {
+	/* Media type */
+	css_media_type        type;
+
+	/* Viewport / page media features */
+	css_fixed             width;  /* In css pixels */
+	css_fixed             height; /* In css pixels */
+	css_fixed             aspect_ratio;
+	css_media_orientation orientation;
+
+	/* Display quality media features */
+	css_media_resolution       resolution;
+	css_media_scan             scan;
+	css_fixed                  grid; /** boolean: {0|1} */
+	css_media_update_frequency update;
+	css_media_overflow_block   overflow_block;
+	css_media_overflow_inline  overflow_inline;
+
+	/* Color media features */
+	css_fixed color;      /* colour bpp (0 for monochrome) */
+	css_fixed color_index;
+	css_fixed monochrome; /* monochrome bpp (0 for colour) */
+	css_fixed inverted_colors; /** boolean: {0|1} */
+
+	/* Interaction media features */
+	css_media_pointer pointer;
+	css_media_pointer any_pointer;
+	css_media_hover   hover;
+	css_media_hover   any_hover;
+
+	/* Environmental media features */
+	css_media_light_level light_level;
+
+	/* Scripting media features */
+	css_media_scripting scripting;
+
+	/* Client details for length conversion */
+	css_fixed client_font_size;   /* In pt */
+	css_fixed client_line_height; /* In css pixels */
+} css_media;
 
 /**
  * Type of a qualified name

@@ -14,7 +14,7 @@
 #include <libcss/types.h>
 #include <libcss/properties.h>
 
-typedef uint32_t css_code_t; 
+typedef uint32_t css_code_t;
 
 typedef enum css_properties_e opcode_t;
 
@@ -32,6 +32,19 @@ typedef enum unit {
 	UNIT_MM   = 5,
 	UNIT_PT   = 6,
 	UNIT_PC   = 7,
+	UNIT_CAP  = 8,
+	UNIT_CH   = 9,
+	UNIT_IC   = 10,
+	UNIT_REM  = 11,
+	UNIT_LH   = 12,
+	UNIT_RLH  = 13,
+	UNIT_VH   = 14,
+	UNIT_VW   = 15,
+	UNIT_VI   = 16,
+	UNIT_VB   = 17,
+	UNIT_VMIN = 18,
+	UNIT_VMAX = 19,
+	UNIT_Q    = 20,
 
 	UNIT_PCT  = (1 << 8),
 
@@ -39,6 +52,7 @@ typedef enum unit {
 	UNIT_DEG  = (1 << 9) + 0,
 	UNIT_GRAD = (1 << 9) + 1,
 	UNIT_RAD  = (1 << 9) + 2,
+	UNIT_TURN = (1 << 9) + 3,
 
 	UNIT_TIME = (1 << 10),
 	UNIT_MS   = (1 << 10) + 0,
@@ -46,7 +60,12 @@ typedef enum unit {
 
 	UNIT_FREQ = (1 << 11),
 	UNIT_HZ   = (1 << 11) + 0,
-	UNIT_KHZ  = (1 << 11) + 1
+	UNIT_KHZ  = (1 << 11) + 1,
+
+	UNIT_RESOLUTION = (1 << 12),
+	UNIT_DPI  = (1 << 12) + 0,
+	UNIT_DPCM = (1 << 12) + 1,
+	UNIT_DPPX = (1 << 12) + 2,
 } unit;
 
 typedef uint32_t colour;

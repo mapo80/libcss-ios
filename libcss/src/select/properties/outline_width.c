@@ -14,7 +14,7 @@
 #include "select/properties/properties.h"
 #include "select/properties/helpers.h"
 
-css_error css__cascade_outline_width(uint32_t opv, css_style *style, 
+css_error css__cascade_outline_width(uint32_t opv, css_style *style,
 		css_select_state *state)
 {
 	return css__cascade_border_width(opv, style, state, set_outline_width);
@@ -41,17 +41,10 @@ css_error css__compose_outline_width(const css_computed_style *parent,
 	css_unit unit = CSS_UNIT_PX;
 	uint8_t type = get_outline_width(child, &length, &unit);
 
-	if ((child->uncommon == NULL && parent->uncommon != NULL) ||
-			type == CSS_OUTLINE_WIDTH_INHERIT ||
-			(child->uncommon != NULL && result != child)) {
-		if ((child->uncommon == NULL && parent->uncommon != NULL) ||
-				type == CSS_OUTLINE_WIDTH_INHERIT) {
-			type = get_outline_width(parent, &length, &unit);
-		}
-
-		return set_outline_width(result, type, length, unit);
+	if (type == CSS_OUTLINE_WIDTH_INHERIT) {
+		type = get_outline_width(parent, &length, &unit);
 	}
 
-	return CSS_OK;
+	return set_outline_width(result, type, length, unit);
 }
 

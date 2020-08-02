@@ -87,6 +87,7 @@ int main(int argc, char **argv)
 	run_test(&ctx);
 
 	free(ctx.buf);
+	free(ctx.exp);
 
 	parserutils_charset_codec_destroy(ctx.codec);
 
@@ -117,7 +118,7 @@ bool handle_line(const char *data, size_t datalen, void *pw)
 			if (ctx->buf[ctx->bufused - 1] == '\n')
 				ctx->bufused -= 1;
 
-			if (ctx->exp[ctx->expused - 1] == '\n')
+			if (ctx->expused != 0 && ctx->exp[ctx->expused - 1] == '\n')
 				ctx->expused -= 1;
 
 			run_test(ctx);

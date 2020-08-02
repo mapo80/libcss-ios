@@ -47,7 +47,7 @@ static lwc_context *ctx = NULL;
 
 typedef lwc_hash (*lwc_hasher)(const char *, size_t);
 typedef int (*lwc_strncmp)(const char *, const char *, size_t);
-typedef void (*lwc_memcpy)(char *, const char *, size_t);
+typedef void * (*lwc_memcpy)(void * restrict, const void * restrict, size_t);
 
 static lwc_error
 lwc__initialise(void)
@@ -238,12 +238,17 @@ lwc__lcase_strncmp(const char *s1, const char *s2, size_t n)
 	return 0;
 }
 
-static void
-lwc__lcase_memcpy(char *target, const char *source, size_t n)
+static void *
+lwc__lcase_memcpy(void *restrict _target, const void *restrict _source, size_t n)
 {
+	char *restrict target = _target;
+	const char *restrict source = _source;
+
 	while (n--) {
 		*target++ = lwc__dolower(*source++);
 	}
+
+	return _target;
 }
 
 lwc_error
@@ -266,12 +271,22 @@ lwc_iterate_strings(lwc_iteration_callback_fn cb, void *pw)
 {
 	lwc_hash n;
 	lwc_string *str;
+	bool found = false;
 
 	if (ctx == NULL)
 		return;
 
 	for (n = 0; n < ctx->bucketcount; ++n) {
-		for (str = ctx->buckets[n]; str != NULL; str = str->next)
+		for (str = ctx->buckets[n]; str != NULL; str = str->next) {
+			found = true;
 			cb(str, pw);
+		}
+	}
+
+	if (found == false) {
+		/* We found no strings, so remove the global context. */
+		free(ctx->buckets);
+		free(ctx);
+		ctx = NULL;
 	}
 }

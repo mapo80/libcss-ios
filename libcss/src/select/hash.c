@@ -10,6 +10,7 @@
 
 #include "stylesheet.h"
 #include "select/hash.h"
+#include "select/mq.h"
 #include "utils/utils.h"
 
 #undef PRINT_CHAIN_BLOOM_DETAILS
@@ -43,7 +44,7 @@ static hash_entry empty_slot;
 
 static inline lwc_string *_class_name(const css_selector *selector);
 static inline lwc_string *_id_name(const css_selector *selector);
-static css_error _insert_into_chain(css_selector_hash *ctx, hash_entry *head, 
+static css_error _insert_into_chain(css_selector_hash *ctx, hash_entry *head,
 		const css_selector *selector);
 static css_error _remove_from_chain(css_selector_hash *ctx, hash_entry *head,
 		const css_selector *selector);
@@ -106,36 +107,6 @@ static inline bool _chain_good_for_element_name(const css_selector *selector,
 	return true;
 }
 
-/**
- * Test whether the rule applies for current media.
- *
- * \param rule		Rule to test
- * \meaid media		Current media type(s)
- * \return true iff chain's rule applies for media
- */
-static inline bool _rule_good_for_media(const css_rule *rule, uint64_t media)
-{
-	bool applies = true;
-	const css_rule *ancestor = rule;
-
-	while (ancestor != NULL) {
-		const css_rule_media *m = (const css_rule_media *) ancestor;
-
-		if (ancestor->type == CSS_RULE_MEDIA &&
-				(m->media & media) == 0) {
-			applies = false;
-			break;
-		}
-
-		if (ancestor->ptype != CSS_RULE_PARENT_STYLESHEET)
-			ancestor = ancestor->parent;
-		else
-			ancestor = NULL;
-	}
-
-	return applies;
-}
-
 
 /**
  * Create a hash
@@ -150,44 +121,40 @@ css_error css__selector_hash_create(css_selector_hash **hash)
 	if (hash == NULL)
 		return CSS_BADPARM;
 
-	h = malloc(sizeof(css_selector_hash));
+	h = calloc(1, sizeof(css_selector_hash));
 	if (h == NULL)
 		return CSS_NOMEM;
 
 	/* Element hash */
-	h->elements.slots = malloc(DEFAULT_SLOTS * sizeof(hash_entry));
+	h->elements.slots = calloc(DEFAULT_SLOTS, sizeof(hash_entry));
 	if (h->elements.slots == NULL) {
 		free(h);
 		return CSS_NOMEM;
 	}
-	memset(h->elements.slots, 0, DEFAULT_SLOTS * sizeof(hash_entry));
 	h->elements.n_slots = DEFAULT_SLOTS;
 
 	/* Class hash */
-	h->classes.slots = malloc(DEFAULT_SLOTS * sizeof(hash_entry));
+	h->classes.slots = calloc(DEFAULT_SLOTS, sizeof(hash_entry));
 	if (h->classes.slots == NULL) {
 		free(h->elements.slots);
 		free(h);
 		return CSS_NOMEM;
 	}
-	memset(h->classes.slots, 0, DEFAULT_SLOTS * sizeof(hash_entry));
 	h->classes.n_slots = DEFAULT_SLOTS;
 
 	/* ID hash */
-	h->ids.slots = malloc(DEFAULT_SLOTS * sizeof(hash_entry));
+	h->ids.slots = calloc(DEFAULT_SLOTS, sizeof(hash_entry));
 	if (h->ids.slots == NULL) {
 		free(h->classes.slots);
 		free(h->elements.slots);
 		free(h);
 		return CSS_NOMEM;
 	}
-	memset(h->ids.slots, 0, DEFAULT_SLOTS * sizeof(hash_entry));
 	h->ids.n_slots = DEFAULT_SLOTS;
 
-	/* Universal chain */
-	memset(&h->universal, 0, sizeof(hash_entry));
+	/* Universal chain head already initiliased by calloc of `h`. */
 
-	h->hash_size = sizeof(css_selector_hash) + 
+	h->hash_size = sizeof(css_selector_hash) +
 			DEFAULT_SLOTS * sizeof(hash_entry) +
 			DEFAULT_SLOTS * sizeof(hash_entry) +
 			DEFAULT_SLOTS * sizeof(hash_entry);
@@ -366,6 +333,7 @@ css_error css__selector_hash_find(css_selector_hash *hash,
 		const css_selector ***matched)
 {
 	uint32_t index, mask;
+	lwc_hash name_hash;
 	hash_entry *head;
 
 	if (hash == NULL || req == NULL || iterator == NULL || matched == NULL)
@@ -374,12 +342,11 @@ css_error css__selector_hash_find(css_selector_hash *hash,
 	/* Find index */
 	mask = hash->elements.n_slots - 1;
 
-	if (req->qname.name->insensitive == NULL &&
-			lwc__intern_caseless_string(
-			req->qname.name) != lwc_error_ok) {
+	if (lwc_string_caseless_hash_value(req->qname.name,
+			&name_hash) != lwc_error_ok) {
 		return CSS_NOMEM;
 	}
-	index = _hash_name(req->qname.name) & mask;
+	index = name_hash & mask;
 
 	head = &hash->elements.slots[index];
 
@@ -400,7 +367,7 @@ css_error css__selector_hash_find(css_selector_hash *hash,
 				if (css_bloom_in_bloom(
 						head->sel_chain_bloom,
 						req->node_bloom) &&
-				    _rule_good_for_media(head->sel->rule,
+				    mq_rule_good_for_media(head->sel->rule,
 						req->media)) {
 					/* Found a match */
 					break;
@@ -437,6 +404,7 @@ css_error css__selector_hash_find_by_class(css_selector_hash *hash,
 		const css_selector ***matched)
 {
 	uint32_t index, mask;
+	lwc_hash class_hash;
 	hash_entry *head;
 
 	if (hash == NULL || req == NULL || req->class == NULL ||
@@ -446,12 +414,11 @@ css_error css__selector_hash_find_by_class(css_selector_hash *hash,
 	/* Find index */
 	mask = hash->classes.n_slots - 1;
 
-	if (req->class->insensitive == NULL &&
-			lwc__intern_caseless_string(
-			req->class) != lwc_error_ok) {
+	if (lwc_string_caseless_hash_value(req->class,
+			&class_hash) != lwc_error_ok) {
 		return CSS_NOMEM;
 	}
-	index = _hash_name(req->class) & mask;
+	index = class_hash & mask;
 
 	head = &hash->classes.slots[index];
 
@@ -478,7 +445,7 @@ css_error css__selector_hash_find_by_class(css_selector_hash *hash,
 							head->sel,
 							&(req->qname),
 							req->uni) &&
-					    _rule_good_for_media(
+					    mq_rule_good_for_media(
 							head->sel->rule,
 							req->media)) {
 						/* Found a match */
@@ -517,6 +484,7 @@ css_error css__selector_hash_find_by_id(css_selector_hash *hash,
 		const css_selector ***matched)
 {
 	uint32_t index, mask;
+	lwc_hash id_hash;
 	hash_entry *head;
 
 	if (hash == NULL || req == NULL || req->id == NULL ||
@@ -526,12 +494,11 @@ css_error css__selector_hash_find_by_id(css_selector_hash *hash,
 	/* Find index */
 	mask = hash->ids.n_slots - 1;
 
-	if (req->id->insensitive == NULL &&
-			lwc__intern_caseless_string(
-			req->id) != lwc_error_ok) {
+	if (lwc_string_caseless_hash_value(req->id,
+			&id_hash) != lwc_error_ok) {
 		return CSS_NOMEM;
 	}
-	index = _hash_name(req->id) & mask;
+	index = id_hash & mask;
 
 	head = &hash->ids.slots[index];
 
@@ -558,7 +525,7 @@ css_error css__selector_hash_find_by_id(css_selector_hash *hash,
 							head->sel,
 							&req->qname,
 							req->uni) &&
-					    _rule_good_for_media(
+					    mq_rule_good_for_media(
 							head->sel->rule,
 							req->media)) {
 						/* Found a match */
@@ -609,7 +576,7 @@ css_error css__selector_hash_find_universal(css_selector_hash *hash,
 			    css_bloom_in_bloom(
 					head->sel_chain_bloom,
 					req->node_bloom) &&
-			    _rule_good_for_media(head->sel->rule,
+			    mq_rule_good_for_media(head->sel->rule,
 					req->media)) {
 				/* Found a match */
 				break;
@@ -814,7 +781,7 @@ static void print_chain_bloom_details(css_bloom bloom[CSS_BLOOM_SIZE])
  * \return CSS_OK    on success,
  *         CSS_NOMEM on memory exhaustion.
  */
-css_error _insert_into_chain(css_selector_hash *ctx, hash_entry *head, 
+css_error _insert_into_chain(css_selector_hash *ctx, hash_entry *head,
 		const css_selector *selector)
 {
 	if (head->sel == NULL) {
@@ -840,7 +807,7 @@ css_error _insert_into_chain(css_selector_hash *ctx, hash_entry *head,
 
 			/* Sort by ascending rule index */
 			if (search->sel->specificity == selector->specificity &&
-					search->sel->rule->index > 
+					search->sel->rule->index >
 					selector->rule->index)
 				break;
 
@@ -848,23 +815,22 @@ css_error _insert_into_chain(css_selector_hash *ctx, hash_entry *head,
 			search = search->next;
 		} while (search != NULL);
 
+		if (prev == NULL) {
+			*entry = *head;
+			head->next = entry;
+
+			entry = head;
+		} else {
+			entry->next = prev->next;
+			prev->next = entry;
+		}
+
 		entry->sel = selector;
 		_chain_bloom_generate(selector, entry->sel_chain_bloom);
 
 #ifdef PRINT_CHAIN_BLOOM_DETAILS
 		print_chain_bloom_details(entry->sel_chain_bloom);
 #endif
-
-		if (prev == NULL) {
-			hash_entry temp;
-			entry->next = entry;
-			temp = *entry;
-			*entry = *head;
-			*head = temp;
-		} else {
-			entry->next = prev->next;
-			prev->next = entry;
-		}
 
 		ctx->hash_size += sizeof(hash_entry);
 	}
@@ -953,7 +919,7 @@ css_error _iterate_elements(
 				if (css_bloom_in_bloom(
 						head->sel_chain_bloom,
 						req->node_bloom) &&
-				    _rule_good_for_media(head->sel->rule,
+				    mq_rule_good_for_media(head->sel->rule,
 						req->media)) {
 					/* Found a match */
 					break;
@@ -1012,7 +978,7 @@ css_error _iterate_classes(
 							head->sel,
 							&(req->qname),
 							req->uni) &&
-					    _rule_good_for_media(
+					    mq_rule_good_for_media(
 							head->sel->rule,
 							req->media)) {
 						/* Found a match */
@@ -1073,7 +1039,7 @@ css_error _iterate_ids(
 							head->sel,
 							&req->qname,
 							req->uni) &&
-					    _rule_good_for_media(
+					    mq_rule_good_for_media(
 							head->sel->rule,
 							req->media)) {
 						/* Found a match */
@@ -1117,7 +1083,7 @@ css_error _iterate_universal(
 			    css_bloom_in_bloom(
 					head->sel_chain_bloom,
 					req->node_bloom) &&
-			    _rule_good_for_media(head->sel->rule,
+			    mq_rule_good_for_media(head->sel->rule,
 					req->media)) {
 				/* Found a match */
 				break;

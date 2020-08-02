@@ -31,12 +31,39 @@ typedef struct prop_state {
 	             inherit   : 1;	/* Property is set to inherit */
 } prop_state;
 
+
+typedef enum css_node_flags {
+	CSS_NODE_FLAGS_NONE                 = 0,
+	CSS_NODE_FLAGS_HAS_HINTS            = (1 <<  0),
+	CSS_NODE_FLAGS_HAS_INLINE_STYLE     = (1 <<  1),
+	CSS_NODE_FLAGS_PSEUDO_CLASS_ACTIVE  = (1 <<  2),
+	CSS_NODE_FLAGS_PSEUDO_CLASS_FOCUS   = (1 <<  3),
+	CSS_NODE_FLAGS_PSEUDO_CLASS_HOVER   = (1 <<  4),
+	CSS_NODE_FLAGS_PSEUDO_CLASS_LINK    = (1 <<  5),
+	CSS_NODE_FLAGS_PSEUDO_CLASS_VISITED = (1 <<  6),
+	CSS_NODE_FLAGS_TAINT_PSEUDO_CLASS   = (1 <<  7),
+	CSS_NODE_FLAGS_TAINT_ATTRIBUTE      = (1 <<  8),
+	CSS_NODE_FLAGS_TAINT_SIBLING        = (1 <<  9),
+	CSS_NODE_FLAGS__PSEUDO_CLASSES_MASK =
+			(CSS_NODE_FLAGS_PSEUDO_CLASS_ACTIVE |
+			 CSS_NODE_FLAGS_PSEUDO_CLASS_FOCUS  |
+			 CSS_NODE_FLAGS_PSEUDO_CLASS_HOVER  |
+			 CSS_NODE_FLAGS_PSEUDO_CLASS_LINK   |
+			 CSS_NODE_FLAGS_PSEUDO_CLASS_VISITED),
+} css_node_flags;
+
+struct css_node_data {
+	css_select_results partial;
+	css_bloom *bloom;
+	css_node_flags flags;
+};
+
 /**
  * Selection state
  */
 typedef struct css_select_state {
 	void *node;			/* Node we're selecting for */
-	uint64_t media;			/* Currently active media types */
+	const css_media *media;		/* Currently active media spec */
 	css_select_results *results;	/* Result set to populate */
 
 	css_pseudo_element current_pseudo;	/* Current pseudo element */
@@ -58,7 +85,7 @@ typedef struct css_select_state {
 	reject_item reject_cache[128];	/* Reject cache (filled from end) */
 	reject_item *next_reject;	/* Next free slot in reject cache */
 
-	const css_bloom *bloom;		/* Bloom filter */
+	struct css_node_data *node_data;	/* Data we'll store on node */
 
 	prop_state props[CSS_N_PROPERTIES][CSS_PSEUDO_ELEMENT_COUNT];
 } css_select_state;

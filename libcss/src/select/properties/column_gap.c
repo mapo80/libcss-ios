@@ -14,7 +14,7 @@
 #include "select/properties/properties.h"
 #include "select/properties/helpers.h"
 
-css_error css__cascade_column_gap(uint32_t opv, css_style *style, 
+css_error css__cascade_column_gap(uint32_t opv, css_style *style,
 		css_select_state *state)
 {
 	return css__cascade_length_normal(opv, style, state, set_column_gap);
@@ -41,17 +41,9 @@ css_error css__compose_column_gap(const css_computed_style *parent,
 	css_unit unit = CSS_UNIT_EM;
 	uint8_t type = get_column_gap(child, &length, &unit);
 
-	if ((child->uncommon == NULL && parent->uncommon != NULL) ||
-			type == CSS_COLUMN_GAP_INHERIT ||
-			(child->uncommon != NULL && result != child)) {
-		if ((child->uncommon == NULL && parent->uncommon != NULL) ||
-				type == CSS_COLUMN_GAP_INHERIT) {
-			type = get_column_gap(parent, &length, &unit);
-		}
-
-		return set_column_gap(result, type, length, unit);
+	if (type == CSS_COLUMN_GAP_INHERIT) {
+		type = get_column_gap(parent, &length, &unit);
 	}
 
-	return CSS_OK;
+	return set_column_gap(result, type, length, unit);
 }
-

@@ -14,7 +14,7 @@
 #include "select/properties/properties.h"
 #include "select/properties/helpers.h"
 
-css_error css__cascade_word_spacing(uint32_t opv, css_style *style, 
+css_error css__cascade_word_spacing(uint32_t opv, css_style *style,
 		css_select_state *state)
 {
 	return css__cascade_length_normal(opv, style, state, set_word_spacing);
@@ -29,7 +29,7 @@ css_error css__set_word_spacing_from_hint(const css_hint *hint,
 
 css_error css__initial_word_spacing(css_select_state *state)
 {
-	return set_word_spacing(state->computed, CSS_WORD_SPACING_NORMAL, 
+	return set_word_spacing(state->computed, CSS_WORD_SPACING_NORMAL,
 			0, CSS_UNIT_PX);
 }
 
@@ -41,17 +41,9 @@ css_error css__compose_word_spacing(const css_computed_style *parent,
 	css_unit unit = CSS_UNIT_PX;
 	uint8_t type = get_word_spacing(child, &length, &unit);
 
-	if ((child->uncommon == NULL && parent->uncommon != NULL) ||
-			type == CSS_WORD_SPACING_INHERIT ||
-			(child->uncommon != NULL && result != child)) {
-		if ((child->uncommon == NULL && parent->uncommon != NULL) ||
-				type == CSS_WORD_SPACING_INHERIT) {
-			type = get_word_spacing(parent, &length, &unit);
-		}
-
-		return set_word_spacing(result, type, length, unit);
+	if (type == CSS_WORD_SPACING_INHERIT) {
+		type = get_word_spacing(parent, &length, &unit);
 	}
 
-	return CSS_OK;
+	return set_word_spacing(result, type, length, unit);
 }
-

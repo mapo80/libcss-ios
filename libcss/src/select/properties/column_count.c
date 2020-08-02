@@ -14,7 +14,7 @@
 #include "select/properties/properties.h"
 #include "select/properties/helpers.h"
 
-css_error css__cascade_column_count(uint32_t opv, css_style *style, 
+css_error css__cascade_column_count(uint32_t opv, css_style *style,
 		css_select_state *state)
 {
 	uint16_t value = CSS_COLUMN_COUNT_INHERIT;
@@ -22,7 +22,7 @@ css_error css__cascade_column_count(uint32_t opv, css_style *style,
 
 	if (isInherit(opv) == false) {
 		switch (getValue(opv)) {
-		case COLUMN_COUNT_SET: 
+		case COLUMN_COUNT_SET:
 			value = CSS_COLUMN_COUNT_SET;
 			count = *((css_fixed *) style->bytecode);
 			advance_bytecode(style, sizeof(count));
@@ -59,17 +59,9 @@ css_error css__compose_column_count(const css_computed_style *parent,
 	int32_t count = 0;
 	uint8_t type = get_column_count(child, &count);
 
-	if ((child->uncommon == NULL && parent->uncommon != NULL) ||
-			type == CSS_COLUMN_COUNT_INHERIT ||
-			(child->uncommon != NULL && result != child)) {
-		if ((child->uncommon == NULL && parent->uncommon != NULL) ||
-				type == CSS_COLUMN_COUNT_INHERIT) {
-			type = get_column_count(parent, &count);
-		}
-
-		return set_column_count(result, type, count);
+	if (type == CSS_COLUMN_COUNT_INHERIT) {
+		type = get_column_count(parent, &count);
 	}
 
-	return CSS_OK;
+	return set_column_count(result, type, count);
 }
-

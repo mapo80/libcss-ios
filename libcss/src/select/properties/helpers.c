@@ -29,6 +29,19 @@ css_unit css__to_css_unit(uint32_t u)
 	case UNIT_MM: return CSS_UNIT_MM;
 	case UNIT_PT: return CSS_UNIT_PT;
 	case UNIT_PC: return CSS_UNIT_PC;
+	case UNIT_CAP: return CSS_UNIT_CAP;
+	case UNIT_CH: return CSS_UNIT_CH;
+	case UNIT_IC: return CSS_UNIT_IC;
+	case UNIT_REM: return CSS_UNIT_REM;
+	case UNIT_LH: return CSS_UNIT_LH;
+	case UNIT_RLH: return CSS_UNIT_RLH;
+	case UNIT_VH: return CSS_UNIT_VH;
+	case UNIT_VW: return CSS_UNIT_VW;
+	case UNIT_VI: return CSS_UNIT_VI;
+	case UNIT_VB: return CSS_UNIT_VB;
+	case UNIT_VMIN: return CSS_UNIT_VMIN;
+	case UNIT_VMAX: return CSS_UNIT_VMAX;
+	case UNIT_Q: return CSS_UNIT_Q;
 	case UNIT_PCT: return CSS_UNIT_PCT;
 	case UNIT_DEG: return CSS_UNIT_DEG;
 	case UNIT_GRAD: return CSS_UNIT_GRAD;
@@ -46,17 +59,17 @@ css_unit css__to_css_unit(uint32_t u)
  * Utilities below here							      *
  ******************************************************************************/
 css_error css__cascade_bg_border_color(uint32_t opv, css_style *style,
-		css_select_state *state, 
+		css_select_state *state,
 		css_error (*fun)(css_computed_style *, uint8_t, css_color))
 {
 	uint16_t value = CSS_BACKGROUND_COLOR_INHERIT;
 	css_color color = 0;
 
-	assert(CSS_BACKGROUND_COLOR_INHERIT == 
+	assert(CSS_BACKGROUND_COLOR_INHERIT ==
 	       (enum css_background_color_e)CSS_BORDER_COLOR_INHERIT);
-	assert(CSS_BACKGROUND_COLOR_COLOR == 
+	assert(CSS_BACKGROUND_COLOR_COLOR ==
 	       (enum css_background_color_e)CSS_BORDER_COLOR_COLOR);
-	assert(CSS_BACKGROUND_COLOR_CURRENT_COLOR == 
+	assert(CSS_BACKGROUND_COLOR_CURRENT_COLOR ==
 	       (enum css_background_color_e)CSS_BORDER_COLOR_CURRENT_COLOR);
 
 	if (isInherit(opv) == false) {
@@ -85,7 +98,7 @@ css_error css__cascade_bg_border_color(uint32_t opv, css_style *style,
 
 css_error css__cascade_uri_none(uint32_t opv, css_style *style,
 		css_select_state *state,
-		css_error (*fun)(css_computed_style *, uint8_t, 
+		css_error (*fun)(css_computed_style *, uint8_t,
 				lwc_string *))
 {
 	uint16_t value = CSS_BACKGROUND_IMAGE_INHERIT;
@@ -105,7 +118,7 @@ css_error css__cascade_uri_none(uint32_t opv, css_style *style,
 	}
 
 	/** \todo lose fun != NULL once all properties have set routines */
-	if (fun != NULL && css__outranks_existing(getOpcode(opv), 
+	if (fun != NULL && css__outranks_existing(getOpcode(opv),
 			isImportant(opv), state, isInherit(opv))) {
 		return fun(state->computed, value, uri);
 	}
@@ -114,7 +127,7 @@ css_error css__cascade_uri_none(uint32_t opv, css_style *style,
 }
 
 css_error css__cascade_border_style(uint32_t opv, css_style *style,
-		css_select_state *state, 
+		css_select_state *state,
 		css_error (*fun)(css_computed_style *, uint8_t))
 {
 	uint16_t value = CSS_BORDER_STYLE_INHERIT;
@@ -165,8 +178,8 @@ css_error css__cascade_border_style(uint32_t opv, css_style *style,
 }
 
 css_error css__cascade_border_width(uint32_t opv, css_style *style,
-		css_select_state *state, 
-		css_error (*fun)(css_computed_style *, uint8_t, css_fixed, 
+		css_select_state *state,
+		css_error (*fun)(css_computed_style *, uint8_t, css_fixed,
 				css_unit))
 {
 	uint16_t value = CSS_BORDER_WIDTH_INHERIT;
@@ -326,7 +339,7 @@ css_error css__cascade_length(uint32_t opv, css_style *style,
 	unit = css__to_css_unit(unit);
 
 	/** \todo lose fun != NULL once all properties have set routines */
-	if (fun != NULL && css__outranks_existing(getOpcode(opv), 
+	if (fun != NULL && css__outranks_existing(getOpcode(opv),
 			isImportant(opv), state, isInherit(opv))) {
 		return fun(state->computed, value, length, unit);
 	}
@@ -350,7 +363,7 @@ css_error css__cascade_number(uint32_t opv, css_style *style,
 	}
 
 	/** \todo lose fun != NULL once all properties have set routines */
-	if (fun != NULL && css__outranks_existing(getOpcode(opv), 
+	if (fun != NULL && css__outranks_existing(getOpcode(opv),
 			isImportant(opv), state, isInherit(opv))) {
 		return fun(state->computed, value, length);
 	}
@@ -358,7 +371,7 @@ css_error css__cascade_number(uint32_t opv, css_style *style,
 	return CSS_OK;
 }
 
-css_error css__cascade_page_break_after_before_inside(uint32_t opv, 
+css_error css__cascade_page_break_after_before_inside(uint32_t opv,
 		css_style *style, css_select_state *state,
 		css_error (*fun)(css_computed_style *, uint8_t))
 {
@@ -387,7 +400,7 @@ css_error css__cascade_page_break_after_before_inside(uint32_t opv,
 	}
 
 	/** \todo lose fun != NULL */
-	if (fun != NULL && css__outranks_existing(getOpcode(opv), 
+	if (fun != NULL && css__outranks_existing(getOpcode(opv),
 			isImportant(opv), state, isInherit(opv))) {
 		return fun(state->computed, value);
 	}
@@ -471,7 +484,7 @@ css_error css__cascade_counter_increment_reset(uint32_t opv, css_style *style,
 				advance_bytecode(style, sizeof(css_code_t));
 
 				temp = realloc(counters,
-						(n_counters + 1) * 
+						(n_counters + 1) *
 						sizeof(css_computed_counter));
 				if (temp == NULL) {
 					if (counters != NULL) {
